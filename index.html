@@ -1,15 +1,129 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Random Topic Generator</title>
-    <script src="./topics.js"></script>
+    <title>Generator Topik Acak</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #F9F5EB;
+            color: #1A3C34;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            width: 100%;
+            padding: 2rem 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .topic-window {
+            width: 100%;
+            min-width: 0;
+            margin-top: 75px;
+            height: 390px;
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .topic-text {
+            font-size: 5rem;
+            font-weight: bold;
+            transition: transform 1s ease-out;
+            color: #1A3C34;
+        }
+
+        .spin-btn {
+            background-color: #2A5A4E;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1.5rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 20px;
+        }
+
+        .spin-btn:hover {
+            background-color: #1A3C34;
+        }
+
+        .reel-strip {
+            position: absolute;
+            width: 100%;
+            left: 0;
+            top: 0;
+            will-change: transform;
+            animation: spinWheel 4s ease-in-out;
+        }
+
+        .reel-item {
+            width: 100%;
+            height: 130px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: 'DM Serif Display', serif;
+            font-size: 3rem;
+            line-height: 1.15;
+            color: #1A3C34;
+            padding: 0 1rem;
+            user-select: none;
+            overflow-wrap: break-word;
+        }
+
+        @keyframes spinWheel {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
-    <h1>Random Topic Generator</h1>
+    <div class="container">
+        <div class="topic-window">
+            <h1>Generator Topik Acak</h1>
+            <p id="topic-text" class="topic-text">Topik apa yang akan muncul?</p>
+            <div class="spin-btn-row">
+                <button class="spin-btn" id="spin-btn">Putar Roda</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/mnt/data/topics.js"></script>
     <script>
-        let topicsByLang = {};
+        const topics = topicsByLang.en.easy;
+
+        function getRandomTopic() {
+            const randomIndex = Math.floor(Math.random() * topics.length);
+            return topics[randomIndex];
+        }
+
+        document.getElementById('spin-btn').addEventListener('click', () => {
+            const topic = getRandomTopic();
+            document.getElementById('topic-text').textContent = topic;
+        });
     </script>
 </body>
 </html>
