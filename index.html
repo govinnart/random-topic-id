@@ -1,0 +1,1917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impromptu - Random Topic Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #F9F5EB;
+            color: #1A3C34;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            zoom: 0.88;
+        }
+
+        .container {
+            max-width: 1400px;
+            width: 100%;
+            min-height: 100vh;
+            padding: calc(2rem + 50px) 3rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3rem;
+        }
+
+        .left-panel {
+            flex: 0 0 auto;
+            width: 450px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .title-img {
+            width: 100%;
+            max-width: 700px;
+            height: auto;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle-img {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            opacity: 0.8;
+            margin-top: 2rem;
+        }
+
+        .reel-assembly {
+            display: flex;
+            align-items: stretch;
+            width: 100%;
+            gap: 16px;
+        }
+
+        .topic-window {
+            width: 100%;
+            min-width: 0;
+            margin-top: 75px;
+            height: 390px;
+            position: relative;
+            overflow: hidden;
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
+            mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
+            box-shadow: inset 0 20px 30px -20px rgba(0,0,0,0.06), inset 0 -20px 30px -20px rgba(0,0,0,0.06);
+        }
+
+        /* --- Slot Lever Handle --- */
+        .slot-handle {
+            width: 60px;
+            flex-shrink: 0;
+            position: relative;
+            overflow: visible;
+        }
+
+        .handle-pivot {
+            position: absolute;
+            bottom: 173px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 40% 40%, #3A6A5E, #1A3C34);
+            border: 2px solid #1A3C34;
+            z-index: 4;
+        }
+
+        .handle-pivot::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 40% 40%, #5A8A7E, #2A5A4E);
+        }
+
+        .handle-arm {
+            position: absolute;
+            bottom: 185px;
+            left: 50%;
+            margin-left: -3px;
+            width: 6px;
+            height: 80px;
+            transform-origin: center bottom;
+            transform: rotate(0deg);
+            z-index: 3;
+        }
+
+        .handle-shaft {
+            width: 6px;
+            height: 100%;
+            border-radius: 3px;
+            background: linear-gradient(to right, #2A5A4E, #1A3C34);
+        }
+
+        .handle-knob {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #E8D8FF, #D4C0F9 50%, #B89EE8);
+            border: 2px solid #1A3C34;
+            cursor: grab;
+            touch-action: none;
+            box-shadow: 0 2px 6px rgba(26, 60, 52, 0.2);
+            transition: box-shadow 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .handle-knob-grip {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 3px,
+                rgba(26, 60, 52, 0.15) 3px,
+                rgba(26, 60, 52, 0.15) 5px
+            );
+        }
+
+        .handle-knob:hover {
+            box-shadow: 0 4px 12px rgba(26, 60, 52, 0.3);
+        }
+
+        .handle-arm.grabbing .handle-knob {
+            cursor: grabbing;
+        }
+
+        .handle-arm.disabled .handle-knob {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .handle-arm.spring-back {
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes leverHint {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(25deg); }
+        }
+
+        .handle-arm.hint {
+            animation: leverHint 0.6s ease-in-out 3;
+        }
+
+        .pull-lever-hint {
+            position: absolute;
+            bottom: 305px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 140px;
+            height: auto;
+            opacity: 0.55;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+
+        .pull-lever-hint.hidden {
+            opacity: 0;
+        }
+
+        .mobile-spin-btn {
+            display: none;
+            margin-top: 1.25rem;
+            padding: 0.85rem 2.5rem;
+            font-family: 'Baloo 2', cursive;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #F9F5EB;
+            background: linear-gradient(135deg, #2A5A4E, #1A3C34);
+            border: 2px solid #1A3C34;
+            border-radius: 50px;
+            cursor: pointer;
+            touch-action: manipulation;
+            box-shadow: 0 4px 12px rgba(26, 60, 52, 0.3);
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+
+        .mobile-spin-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 6px rgba(26, 60, 52, 0.3);
+        }
+
+        .mobile-spin-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .topic-col {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .desktop-btn-row {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 30px;
+            justify-content: center;
+        }
+
+        .spin-btn-desktop {
+            display: inline-block;
+            padding: 0.6rem 2.2rem;
+            font-family: 'Baloo 2', cursive;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #F9F5EB;
+            background: linear-gradient(135deg, #2A5A4E, #1A3C34);
+            border: 2px solid #1A3C34;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(26, 60, 52, 0.3);
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+
+        .spin-btn-desktop:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(26, 60, 52, 0.4);
+        }
+
+        .spin-btn-desktop:active {
+            transform: scale(0.95);
+        }
+
+        .spin-btn-desktop:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .timer-btn-desktop {
+            display: inline-block;
+            padding: 0.6rem 2.2rem;
+            font-family: 'Baloo 2', cursive;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1A3C34;
+            background: transparent;
+            border: 2px solid #1A3C34;
+            border-radius: 50px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        .timer-btn-desktop:hover {
+            background: #1A3C34;
+            color: #F9F5EB;
+        }
+
+        .mobile-btn-row {
+            display: none;
+            gap: 0.75rem;
+            margin-top: 1.25rem;
+            justify-content: center;
+        }
+
+        .mobile-btn-row .mobile-spin-btn {
+            display: block;
+            margin-top: 0;
+        }
+
+        .timer-btn-mobile {
+            display: none;
+            padding: 0.85rem 2.5rem;
+            font-family: 'Baloo 2', cursive;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1A3C34;
+            background: transparent;
+            border: 2px solid #1A3C34;
+            border-radius: 50px;
+            text-decoration: none;
+            cursor: pointer;
+            touch-action: manipulation;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        .timer-btn-mobile:hover {
+            background: #1A3C34;
+            color: #F9F5EB;
+        }
+
+        .reel-strip {
+            position: absolute;
+            width: 100%;
+            left: 0;
+            top: 0;
+            will-change: transform;
+        }
+
+        .reel-item {
+            width: 100%;
+            height: 130px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: 'DM Serif Display', serif;
+            font-size: 5rem;
+            line-height: 1.15;
+            color: #1A3C34;
+            padding: 0 1rem;
+            user-select: none;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+        }
+
+        .reel-center-line {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 130px;
+            border-top: 1px solid rgba(26, 60, 52, 0.08);
+            border-bottom: 1px solid rgba(26, 60, 52, 0.08);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .reel-strip.settled .reel-item {
+            opacity: 0.3;
+            transform: scale(1);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        .reel-strip.settled .reel-item.landed {
+            opacity: 1;
+            transform: scale(1.6);
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
+            z-index: 5;
+            position: relative;
+        }
+
+        .brand-badge {
+            position: fixed;
+            top: 1rem;
+            right: 1.5rem;
+            width: 330px;
+            height: auto;
+            opacity: 0.8;
+            z-index: 10;
+        }
+
+        .container {
+            animation: fadeIn 0.8s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Tablet portrait: vertical layout with spin button */
+        @media (max-width: 1024px) and (orientation: portrait) {
+            body {
+                overflow-y: auto;
+                justify-content: flex-start;
+                zoom: 0.9;
+            }
+            .container {
+                flex-direction: column;
+                padding: 2rem;
+                gap: 1.5rem;
+                min-height: auto;
+            }
+            .left-panel { flex: 0 0 auto; width: auto; align-items: center; text-align: center; }
+            .right-panel { width: 100%; margin-top: 0; }
+            .title-img { max-width: 480px; }
+            .subtitle-img { max-width: 400px; margin-top: 1rem; }
+            .brand-badge { width: 180px; top: 0.5rem; right: 0.5rem; }
+            .reel-item { font-size: 2rem; height: 100px; }
+            .topic-window { height: 300px; min-width: 0; margin-top: 0; }
+            .reel-center-line { height: 100px; }
+            .reel-strip.settled .reel-item.landed { transform: scale(1.5); }
+            .slot-handle { display: none; }
+            .mobile-spin-btn { display: block; margin-top: 3rem; }
+            .desktop-btn-row { display: none; }
+            .mobile-btn-row { display: flex; margin-top: 3rem; }
+            .mobile-btn-row .mobile-spin-btn { margin-top: 0; }
+            .timer-btn-mobile { display: block; }
+        }
+
+        /* Phone: vertical layout */
+        @media (max-width: 768px) {
+            body {
+                overflow-y: auto;
+                justify-content: flex-start;
+                zoom: 0.9;
+            }
+            .container {
+                flex-direction: column;
+                padding: 2rem;
+                gap: 0.5rem;
+                min-height: auto;
+            }
+            .left-panel { flex: 0 0 auto; width: auto; align-items: center; text-align: center; }
+            .right-panel { width: 100%; }
+            .title-img { max-width: 400px; }
+            .subtitle-img { max-width: 340px; margin-top: 0.25rem; }
+            .brand-badge { width: 180px; top: 0.5rem; right: 0.5rem; }
+            .reel-item { font-size: 2.6rem; height: 120px; }
+            .topic-window { height: 360px; min-width: 0; margin-top: 0; }
+            .reel-center-line { height: 120px; }
+            .reel-strip.settled .reel-item.landed { transform: scale(1.5); }
+            .slot-handle { display: none; }
+            .mobile-spin-btn { display: block; }
+            .desktop-btn-row { display: none; }
+            .mobile-btn-row { display: flex; }
+            .mobile-btn-row .mobile-spin-btn { margin-top: 0; }
+            .timer-btn-mobile { display: block; }
+        }
+
+        @media (max-width: 480px) {
+            .container { padding: 1rem 1rem 2rem; gap: 0.5rem; padding-top: 2.5rem; }
+            .title-img { max-width: 280px; }
+            .subtitle-img { width: 240px; margin-top: 0.25rem; }
+            .brand-badge { width: 120px; top: 0.5rem; right: 0.5rem; }
+            .reel-assembly { margin-left: -1rem; margin-right: -1rem; }
+            .reel-item { font-size: 2rem; height: 100px; padding: 0 0.5rem; }
+            .topic-window { height: 300px; margin-top: 0; }
+            .reel-center-line { height: 100px; }
+            .reel-strip.settled .reel-item.landed { transform: scale(1.2); }
+            .slot-handle { display: none; }
+            .mobile-spin-btn { display: block; }
+            .desktop-btn-row { display: none; }
+            .mobile-btn-row { display: flex; }
+            .mobile-btn-row .mobile-spin-btn { margin-top: 0; }
+            .timer-btn-mobile { display: block; }
+        }
+        /* --- Dropdown Row (language + difficulty) --- */
+        .dropdown-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            align-self: center;
+            margin-bottom: 0.5rem;
+            z-index: 20;
+            transform: translateX(-38px) translateY(20px);
+        }
+
+        /* --- Language Dropdown --- */
+        .lang-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        /* --- Difficulty Dropdown --- */
+        .diff-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .lang-trigger {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0.6rem 1.5rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #1A3C34;
+            background: transparent;
+            border: 1.5px solid rgba(26, 60, 52, 0.25);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: border-color 0.2s ease, background 0.2s ease;
+            user-select: none;
+        }
+
+        .lang-trigger:hover {
+            border-color: rgba(26, 60, 52, 0.5);
+            background: rgba(26, 60, 52, 0.04);
+        }
+
+        .lang-trigger .lang-flag {
+            font-size: 1.3rem;
+            line-height: 1;
+        }
+
+        .lang-trigger .lang-chevron {
+            font-size: 0.6rem;
+            transition: transform 0.2s ease;
+        }
+
+        .lang-dropdown.open .lang-trigger .lang-chevron {
+            transform: rotate(180deg);
+        }
+
+        .lang-menu {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 50%;
+            min-width: 180px;
+            max-height: 360px;
+            overflow-y: auto;
+            background: #F9F5EB;
+            border: 1.5px solid rgba(26, 60, 52, 0.15);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(26, 60, 52, 0.12);
+            padding: 0.35rem 0;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(-50%) translateY(-4px);
+            transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+            z-index: 10;
+        }
+
+        .lang-dropdown.open .lang-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .lang-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 0.5rem 1rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #1A3C34;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: background 0.15s ease;
+            text-align: left;
+        }
+
+        .lang-option:hover {
+            background: rgba(26, 60, 52, 0.06);
+        }
+
+        .lang-option .lang-flag {
+            font-size: 1.1rem;
+            line-height: 1;
+        }
+
+        .lang-option .lang-check {
+            margin-left: auto;
+            font-size: 0.75rem;
+            opacity: 0;
+            color: #2A5A4E;
+        }
+
+        .lang-option.selected .lang-check {
+            opacity: 1;
+        }
+
+        .diff-trigger {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0.6rem 1.5rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #1A3C34;
+            background: transparent;
+            border: 1.5px solid rgba(26, 60, 52, 0.25);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: border-color 0.2s ease, background 0.2s ease;
+            user-select: none;
+        }
+
+        .diff-trigger:hover {
+            border-color: rgba(26, 60, 52, 0.5);
+            background: rgba(26, 60, 52, 0.04);
+        }
+
+        .diff-trigger .diff-icon {
+            font-size: 1.1rem;
+            line-height: 1;
+        }
+
+        .diff-trigger .diff-chevron {
+            font-size: 0.6rem;
+            transition: transform 0.2s ease;
+        }
+
+        .diff-dropdown.open .diff-trigger .diff-chevron {
+            transform: rotate(180deg);
+        }
+
+        .diff-menu {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 50%;
+            min-width: 180px;
+            background: #F9F5EB;
+            border: 1.5px solid rgba(26, 60, 52, 0.15);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(26, 60, 52, 0.12);
+            padding: 0.35rem 0;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(-50%) translateY(-4px);
+            transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+            z-index: 10;
+        }
+
+        .diff-dropdown.open .diff-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .diff-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 0.5rem 1rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #1A3C34;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: background 0.15s ease;
+            text-align: left;
+        }
+
+        .diff-option:hover {
+            background: rgba(26, 60, 52, 0.06);
+        }
+
+        .diff-option .diff-icon {
+            font-size: 1.1rem;
+            line-height: 1;
+        }
+
+        .diff-option .diff-check {
+            margin-left: auto;
+            font-size: 0.75rem;
+            opacity: 0;
+            color: #2A5A4E;
+        }
+
+        .diff-option.selected .diff-check {
+            opacity: 1;
+        }
+
+        .dropdown-row {
+            flex-wrap: nowrap;
+            justify-content: center;
+        }
+
+        .lang-dropdown, .diff-dropdown, .cat-dropdown {
+            flex-shrink: 1;
+            min-width: 0;
+        }
+
+        .cat-dropdown {
+            position: relative;
+        }
+
+        .cat-dropdown.disabled {
+            opacity: 0.35;
+            pointer-events: none;
+        }
+
+        .cat-trigger {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0.6rem 1.5rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #1A3C34;
+            background: transparent;
+            border: 1.5px solid rgba(26, 60, 52, 0.25);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: border-color 0.2s ease, background 0.2s ease;
+            user-select: none;
+        }
+
+        .cat-trigger:hover {
+            border-color: rgba(26, 60, 52, 0.5);
+            background: rgba(26, 60, 52, 0.04);
+        }
+
+        .cat-trigger .cat-icon {
+            font-size: 1.1rem;
+            line-height: 1;
+        }
+
+        .cat-trigger .cat-chevron {
+            font-size: 0.6rem;
+            transition: transform 0.2s ease;
+        }
+
+        .cat-dropdown.open .cat-trigger .cat-chevron {
+            transform: rotate(180deg);
+        }
+
+        .cat-menu {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 50%;
+            min-width: 220px;
+            max-height: 320px;
+            overflow-y: auto;
+            background: #F9F5EB;
+            border: 1.5px solid rgba(26, 60, 52, 0.15);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(26, 60, 52, 0.12);
+            padding: 0.35rem 0;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(-50%) translateY(-4px);
+            transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+            z-index: 10;
+        }
+
+        .cat-dropdown.open .cat-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .cat-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 0.5rem 1rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #1A3C34;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: background 0.15s ease;
+            text-align: left;
+        }
+
+        .cat-option:hover {
+            background: rgba(26, 60, 52, 0.06);
+        }
+
+        .cat-option .cat-icon {
+            font-size: 1.1rem;
+            line-height: 1;
+        }
+
+        .cat-option .cat-check {
+            margin-left: auto;
+            font-size: 0.75rem;
+            opacity: 0;
+            color: #2A5A4E;
+        }
+
+        .cat-option.selected .cat-check {
+            opacity: 1;
+        }
+
+        /* CJK and non-Latin font overrides */
+        .lang-zh .reel-item {
+            font-family: 'Noto Serif SC', 'DM Serif Display', serif;
+        }
+        .lang-ja .reel-item {
+            font-family: 'Noto Serif JP', 'DM Serif Display', serif;
+        }
+        .lang-ko .reel-item {
+            font-family: 'Noto Serif KR', 'DM Serif Display', serif;
+        }
+        .lang-ar .reel-item,
+        .lang-ur .reel-item {
+            font-family: 'Noto Naskh Arabic', 'DM Serif Display', serif;
+            direction: rtl;
+        }
+        .lang-th .reel-item {
+            font-family: 'Noto Serif Thai', 'DM Serif Display', serif;
+        }
+
+        @media (max-width: 1024px) and (orientation: portrait) {
+            .dropdown-row { align-self: center; transform: none; margin-top: 20px; }
+        }
+
+        @media (max-width: 768px) {
+            .dropdown-row { align-self: center; transform: none; margin-top: 20px; gap: 0.35rem; }
+            .lang-trigger { padding: 0.45rem 0.9rem; font-size: 0.95rem; gap: 4px; }
+            .diff-trigger { padding: 0.45rem 0.9rem; font-size: 0.95rem; gap: 4px; }
+            .cat-trigger { padding: 0.45rem 0.9rem; font-size: 0.95rem; gap: 4px; }
+        }
+
+        @media (max-width: 480px) {
+            .dropdown-row { align-self: center; transform: none; margin-top: 20px; gap: 0.25rem; }
+            .lang-trigger, .diff-trigger, .cat-trigger {
+                padding: 0.35rem 0.55rem; font-size: 0.8rem; gap: 3px;
+                white-space: nowrap; overflow: hidden;
+            }
+            .lang-trigger .lang-flag { font-size: 0.95rem; }
+            .diff-trigger .diff-icon { font-size: 0.85rem; }
+            .cat-trigger .cat-icon { font-size: 0.85rem; }
+            .lang-trigger .lang-chevron, .diff-trigger .diff-chevron, .cat-trigger .cat-chevron { font-size: 0.45rem; }
+        }
+
+    </style>
+</head>
+<body>
+    <img src="brand-badge.png" alt="Baby Steps to the Mic ©" class="brand-badge">
+    <div class="container">
+        <div class="left-panel">
+            <img src="title.png" alt="Impromptu Speaking" class="title-img">
+            <img src="subtitle.png" alt="1) Pull lever to get topic 2) Set 1 min timer 3) Record & speak" class="subtitle-img">
+        </div>
+        <div class="right-panel">
+            <div class="dropdown-row">
+                <div class="lang-dropdown" id="langDropdown">
+                    <button class="lang-trigger" id="langTrigger">
+                        <span class="lang-flag" id="langFlag">🇺🇸</span>
+                        <span class="lang-code" id="langCode">EN</span>
+                        <span class="lang-chevron">▼</span>
+                    </button>
+                    <div class="lang-menu" id="langMenu">
+                        <button class="lang-option selected" data-lang="en" data-flag="🇺🇸" data-code="EN">
+                            <span class="lang-flag">🇺🇸</span> English
+                            <span class="lang-check">✓</span>
+                        </button>
+                        <button class="lang-option" data-lang="es" data-flag="🇪🇸" data-code="ES">
+                            <span class="lang-flag">🇪🇸</span> Español
+                            <span class="lang-check">✓</span>
+                        </button>
+                        <button class="lang-option" data-lang="fr" data-flag="🇫🇷" data-code="FR">
+                            <span class="lang-flag">🇫🇷</span> Français
+                            <span class="lang-check">✓</span>
+                        </button>
+                        <button class="lang-option" data-lang="de" data-flag="🇩🇪" data-code="DE">
+                            <span class="lang-flag">🇩🇪</span> Deutsch
+                            <span class="lang-check">✓</span>
+                        </button>
+                        <button class="lang-option" data-lang="zh" data-flag="🇨🇳" data-code="ZH">
+                            <span class="lang-flag">🇨🇳</span> 中文
+                            <span class="lang-check">✓</span>
+                        </button>
+                        <button class="lang-option" data-lang="it" data-flag="🇮🇹" data-code="IT">
+                            <span class="lang-flag">🇮🇹</span> Italiano
+                            <span class="lang-check">✓</span>
+                        </button>
+                        <button class="lang-option" data-lang="ar" data-flag="🇸🇦" data-code="AR">
+                            <span class="lang-flag">🇸🇦</span> العربية
+                            <span class="lang-check">✓</span>
+                        </button>
+                        <button class="lang-option" data-lang="pt" data-flag="🇧🇷" data-code="PT">
+                            <span class="lang-flag">🇧🇷</span> Português
+                            <span class="lang-check">✓</span>
+                        </button>
+                        <button class="lang-option" data-lang="ko" data-flag="🇰🇷" data-code="KO">
+                            <span class="lang-flag">🇰🇷</span> 한국어
+                            <span class="lang-check">✓</span>
+                        </button>
+                        <button class="lang-option" data-lang="ja" data-flag="🇯🇵" data-code="JA">
+                            <span class="lang-flag">🇯🇵</span> 日本語
+                            <span class="lang-check">✓</span>
+                        </button>
+                        <button class="lang-option" data-lang="th" data-flag="🇹🇭" data-code="TH">
+                            <span class="lang-flag">🇹🇭</span> ไทย
+                            <span class="lang-check">✓</span>
+                        </button>
+                        <button class="lang-option" data-lang="ur" data-flag="🇵🇰" data-code="UR">
+                            <span class="lang-flag">🇵🇰</span> اردو
+                            <span class="lang-check">✓</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="diff-dropdown" id="diffDropdown">
+                    <button class="diff-trigger" id="diffTrigger">
+                        <span class="diff-icon" id="diffIcon">🎲</span>
+                        <span class="diff-label" id="diffLabel">Random</span>
+                        <span class="diff-chevron">▼</span>
+                    </button>
+                    <div class="diff-menu" id="diffMenu">
+                        <button class="diff-option selected" data-diff="random" data-icon="🎲" data-label="Random">
+                            <span class="diff-icon">🎲</span> Random
+                            <span class="diff-check">✓</span>
+                        </button>
+                        <button class="diff-option" data-diff="easy" data-icon="🟢" data-label="Easy">
+                            <span class="diff-icon">🟢</span> Easy
+                            <span class="diff-check">✓</span>
+                        </button>
+                        <button class="diff-option" data-diff="medium" data-icon="🟡" data-label="Medium">
+                            <span class="diff-icon">🟡</span> Medium
+                            <span class="diff-check">✓</span>
+                        </button>
+                        <button class="diff-option" data-diff="hard" data-icon="🔴" data-label="Hard">
+                            <span class="diff-icon">🔴</span> Hard
+                            <span class="diff-check">✓</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="cat-dropdown" id="catDropdown">
+                    <button class="cat-trigger" id="catTrigger">
+                        <span class="cat-icon" id="catIcon">🎯</span>
+                        <span class="cat-label" id="catLabel">Random</span>
+                        <span class="cat-chevron">▼</span>
+                    </button>
+                    <div class="cat-menu" id="catMenu">
+                        <button class="cat-option selected" data-cat="random" data-icon="🎯" data-label="Random">
+                            <span class="cat-icon">🎯</span> Random
+                            <span class="cat-check">✓</span>
+                        </button>
+                        <button class="cat-option" data-cat="general" data-icon="💬" data-label="General">
+                            <span class="cat-icon">💬</span> General
+                            <span class="cat-check">✓</span>
+                        </button>
+                        <button class="cat-option" data-cat="tech" data-icon="💻" data-label="Tech">
+                            <span class="cat-icon">💻</span> Tech
+                            <span class="cat-check">✓</span>
+                        </button>
+                        <button class="cat-option" data-cat="finance" data-icon="💰" data-label="Finance">
+                            <span class="cat-icon">💰</span> Finance
+                            <span class="cat-check">✓</span>
+                        </button>
+                        <button class="cat-option" data-cat="roast" data-icon="🔥" data-label="Roast">
+                            <span class="cat-icon">🔥</span> Roast A Popular Thing
+                            <span class="cat-check">✓</span>
+                        </button>
+                        <button class="cat-option" data-cat="pitch" data-icon="💡" data-label="Pitch">
+                            <span class="cat-icon">💡</span> One-Minute Pitch
+                            <span class="cat-check">✓</span>
+                        </button>
+                        <button class="cat-option" data-cat="worsttake" data-icon="🤡" data-label="Worst Take">
+                            <span class="cat-icon">🤡</span> Defend The Worst Take
+                            <span class="cat-check">✓</span>
+                        </button>
+                        <button class="cat-option" data-cat="eli5" data-icon="👶" data-label="ELI5">
+                            <span class="cat-icon">👶</span> Explain It Like You're 5
+                            <span class="cat-check">✓</span>
+                        </button>
+                        <button class="cat-option" data-cat="conspiracy" data-icon="👽" data-label="Conspiracy">
+                            <span class="cat-icon">👽</span> Conspiracy Corner
+                            <span class="cat-check">✓</span>
+                        </button>
+                        <button class="cat-option" data-cat="hottakes" data-icon="🌶️" data-label="Hot Takes">
+                            <span class="cat-icon">🌶️</span> Hot Takes
+                            <span class="cat-check">✓</span>
+                        </button>
+                        <button class="cat-option" data-cat="millennial" data-icon="📱" data-label="Millennial">
+                            <span class="cat-icon">📱</span> Millennial
+                            <span class="cat-check">✓</span>
+                        </button>
+                        <button class="cat-option" data-cat="genz" data-icon="🧃" data-label="Gen Z">
+                            <span class="cat-icon">🧃</span> Gen Z
+                            <span class="cat-check">✓</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="reel-assembly">
+                <div class="topic-col">
+                    <div class="topic-window" id="topicWindow">
+                        <div class="reel-strip" id="reelStrip"></div>
+                        <div class="reel-center-line" id="centerLine"></div>
+                    </div>
+                    <div class="desktop-btn-row">
+                        <button class="spin-btn-desktop" id="desktopSpinBtn">Spin!</button>
+                        <a href="timer.html" class="timer-btn-desktop">Start Timer &rarr;</a>
+                    </div>
+                </div>
+                <div class="slot-handle" aria-hidden="true">
+                    <img src="pull-lever.png" alt="Pull lever" class="pull-lever-hint" id="pullLeverHint">
+                    <div class="handle-arm" id="handleArm">
+                        <div class="handle-knob" id="handleKnob">
+                            <div class="handle-knob-grip"></div>
+                        </div>
+                        <div class="handle-shaft"></div>
+                    </div>
+                    <div class="handle-pivot"></div>
+                </div>
+            </div>
+            <div class="mobile-btn-row">
+                <button class="mobile-spin-btn" id="mobileSpinBtn">Spin!</button>
+                <a href="timer.html" class="timer-btn-mobile">Timer</a>
+            </div>
+        </div>
+    </div>
+
+    <script>const topicsByLang = {};</script>
+    <script src="topics.js"></script>
+    <script src="topics-categories.js"></script>
+    <script>
+        // --- Difficulty State ---
+        var currentDifficulty = localStorage.getItem('impromptu-difficulty') || 'random';
+
+        // --- Category State ---
+        var currentCategory = localStorage.getItem('impromptu-category') || 'random';
+
+        // Category data per language: en is loaded eagerly, others lazy-loaded
+        var topicsByCategoryLang = { en: topicsByCategory };
+        var loadedCatLangs = { en: true };
+
+        // Map from lang code to the global variable name the category file defines
+        var catVarNames = { es: 'topicsByCategoryEs', fr: 'topicsByCategoryFr', de: 'topicsByCategoryDe', zh: 'topicsByCategoryZh', it: 'topicsByCategoryIt', ar: 'topicsByCategoryAr', pt: 'topicsByCategoryPt', ko: 'topicsByCategoryKo', ja: 'topicsByCategoryJa', th: 'topicsByCategoryTh', ur: 'topicsByCategoryUr' };
+
+        function getCategoryMap(lang) {
+            return topicsByCategoryLang[lang] || null;
+        }
+
+        function computeActiveTopics(lang, difficulty, category) {
+            var catMap = getCategoryMap(lang);
+
+            // If no category data for this language, fall back to general topics
+            if (!catMap) {
+                var langTopics = topicsByLang[lang];
+                if (difficulty === 'easy') return langTopics.easy;
+                if (difficulty === 'medium') return langTopics.medium;
+                if (difficulty === 'hard') return langTopics.hard;
+                return langTopics.easy.concat(langTopics.medium, langTopics.hard);
+            }
+
+            // Specific category
+            if (category !== 'random') {
+                var catTopics = catMap[category];
+                if (difficulty === 'easy') return catTopics.easy;
+                if (difficulty === 'medium') return catTopics.medium;
+                if (difficulty === 'hard') return catTopics.hard;
+                return catTopics.easy.concat(catTopics.medium, catTopics.hard);
+            }
+
+            // Random category: combine all categories
+            var all = [];
+            var keys = Object.keys(catMap);
+            for (var i = 0; i < keys.length; i++) {
+                var cat = catMap[keys[i]];
+                if (difficulty === 'easy') { all = all.concat(cat.easy); }
+                else if (difficulty === 'medium') { all = all.concat(cat.medium); }
+                else if (difficulty === 'hard') { all = all.concat(cat.hard); }
+                else { all = all.concat(cat.easy, cat.medium, cat.hard); }
+            }
+            return all;
+        }
+
+        // --- Language State ---
+        var activeTopics = computeActiveTopics('en', currentDifficulty, currentCategory);
+
+        // --- Web Audio API Sound Engine ---
+        let audioCtx = null;
+
+        function ensureAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playTick(progress) {
+            ensureAudioContext();
+            const now = audioCtx.currentTime;
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            const filter = audioCtx.createBiquadFilter();
+
+            const freq = 1800 - progress * 900;
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now);
+            osc.frequency.exponentialRampToValueAtTime(freq * 0.6, now + 0.04);
+
+            filter.type = 'bandpass';
+            filter.frequency.setValueAtTime(2500, now);
+            filter.Q.setValueAtTime(2, now);
+
+            const volume = 0.08 + (1 - progress) * 0.06;
+            gain.gain.setValueAtTime(volume, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start(now);
+            osc.stop(now + 0.06);
+        }
+
+        function playLand() {
+            ensureAudioContext();
+            const now = audioCtx.currentTime;
+
+            const osc1 = audioCtx.createOscillator();
+            const gain1 = audioCtx.createGain();
+            osc1.type = 'sine';
+            osc1.frequency.setValueAtTime(880, now);
+            gain1.gain.setValueAtTime(0.15, now);
+            gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+            osc1.connect(gain1);
+            gain1.connect(audioCtx.destination);
+            osc1.start(now);
+            osc1.stop(now + 0.65);
+
+            const osc2 = audioCtx.createOscillator();
+            const gain2 = audioCtx.createGain();
+            osc2.type = 'sine';
+            osc2.frequency.setValueAtTime(1320, now + 0.06);
+            gain2.gain.setValueAtTime(0, now);
+            gain2.gain.linearRampToValueAtTime(0.1, now + 0.06);
+            gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+            osc2.connect(gain2);
+            gain2.connect(audioCtx.destination);
+            osc2.start(now);
+            osc2.stop(now + 0.55);
+
+            const osc3 = audioCtx.createOscillator();
+            const gain3 = audioCtx.createGain();
+            osc3.type = 'sine';
+            osc3.frequency.setValueAtTime(1760, now + 0.1);
+            gain3.gain.setValueAtTime(0, now);
+            gain3.gain.linearRampToValueAtTime(0.06, now + 0.1);
+            gain3.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+            osc3.connect(gain3);
+            gain3.connect(audioCtx.destination);
+            osc3.start(now);
+            osc3.stop(now + 0.5);
+        }
+
+
+        // --- State ---
+        let isSpinning = false;
+        let lastTopicIndex = -1;
+        let animFrameId = null;
+
+        function getItemHeight() {
+            if (window.innerWidth <= 480) return 100;
+            if (window.innerWidth <= 768) return 120;
+            return 130;
+        }
+
+        function shuffleArray(arr) {
+            const shuffled = arr.slice();
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        function fitTextToWidth(items, containerWidth) {
+            var w = window.innerWidth;
+            var maxFontSize = w <= 480 ? 1.6 : (w <= 768 ? 2.0 : 3.5);
+            var minFontSize = w <= 480 ? 0.8 : (w <= 768 ? 1.0 : 1.2);
+            var wrapThreshold = w <= 480 ? 10 : (w <= 768 ? 12 : 15);
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                var text = item.textContent;
+                var isCJK = /[\u4e00-\u9fff\u3400-\u4dbf]/.test(text);
+                if (isCJK) {
+                    // CJK text: no spaces between characters, split at character boundaries
+                    var len = text.length;
+                    if (len > 18) {
+                        var b1 = Math.floor(len / 3);
+                        var b2 = Math.floor(2 * len / 3);
+                        item.innerHTML = text.substring(0, b1) + '<br>' + text.substring(b1, b2) + '<br>' + text.substring(b2);
+                        item.style.fontSize = (maxFontSize * 0.32) + 'rem';
+                        item.style.lineHeight = '1.15';
+                    } else if (len > 8) {
+                        var mid = Math.floor(len / 2);
+                        item.innerHTML = text.substring(0, mid) + '<br>' + text.substring(mid);
+                        item.style.fontSize = (maxFontSize * 0.42) + 'rem';
+                        item.style.lineHeight = '1.15';
+                    } else {
+                        item.style.fontSize = maxFontSize + 'rem';
+                    }
+                } else if (text.length > wrapThreshold) {
+                    // Space-delimited languages: split at word boundaries
+                    var mid = Math.floor(text.length / 2);
+                    var bestBreak = -1;
+                    for (var j = mid; j >= 0; j--) {
+                        if (text[j] === ' ') { bestBreak = j; break; }
+                    }
+                    if (bestBreak === -1) {
+                        for (var j = mid; j < text.length; j++) {
+                            if (text[j] === ' ') { bestBreak = j; break; }
+                        }
+                    }
+                    var wordCount = text.trim().split(/\s+/).length;
+                    if (wordCount > 12 && bestBreak > 0) {
+                        // Split into 3 lines at ~1/3 and ~2/3
+                        var third1 = Math.floor(text.length / 3);
+                        var third2 = Math.floor(2 * text.length / 3);
+                        var break1 = -1, break2 = -1;
+                        for (var k = third1; k >= 0; k--) { if (text[k] === ' ') { break1 = k; break; } }
+                        if (break1 === -1) { for (var k = third1; k < text.length; k++) { if (text[k] === ' ') { break1 = k; break; } } }
+                        for (var k = third2; k >= break1 + 1; k--) { if (text[k] === ' ') { break2 = k; break; } }
+                        if (break2 === -1 || break2 <= break1) { for (var k = third2; k < text.length; k++) { if (text[k] === ' ') { break2 = k; break; } } }
+                        if (break1 > 0 && break2 > break1) {
+                            item.innerHTML = text.substring(0, break1) + '<br>' + text.substring(break1 + 1, break2) + '<br>' + text.substring(break2 + 1);
+                        } else if (bestBreak > 0) {
+                            item.innerHTML = text.substring(0, bestBreak) + '<br>' + text.substring(bestBreak + 1);
+                        }
+                    } else if (bestBreak > 0) {
+                        item.innerHTML = text.substring(0, bestBreak) + '<br>' + text.substring(bestBreak + 1);
+                    }
+                    var sizeMultiplier = wordCount > 8 ? 0.38 : 0.55;
+                    item.style.fontSize = (maxFontSize * sizeMultiplier) + 'rem';
+                    item.style.lineHeight = '1.15';
+                } else {
+                    item.style.fontSize = maxFontSize + 'rem';
+                }
+                // Universal overflow check: shrink font if any line still exceeds container
+                if (item.scrollWidth > containerWidth) {
+                    var size = parseFloat(item.style.fontSize);
+                    while (size > minFontSize && item.scrollWidth > containerWidth) {
+                        size -= 0.1;
+                        item.style.fontSize = size + 'rem';
+                    }
+                }
+            }
+        }
+
+        function getRandomIndex(exclude) {
+            let idx;
+            do {
+                idx = Math.floor(Math.random() * activeTopics.length);
+            } while (idx === exclude);
+            return idx;
+        }
+
+        function generateTopic(initialVelocity) {
+            if (isSpinning) return;
+            isSpinning = true;
+            if (animFrameId) cancelAnimationFrame(animFrameId);
+            ensureAudioContext();
+
+            const reelStrip = document.getElementById('reelStrip');
+            const centerLine = document.getElementById('centerLine');
+            const topicWindow = document.getElementById('topicWindow');
+            const handleArm = document.getElementById('handleArm');
+            const mobileBtn = document.getElementById('mobileSpinBtn');
+            const desktopBtn = document.getElementById('desktopSpinBtn');
+
+            if (handleArm) handleArm.classList.add('disabled');
+            if (mobileBtn) mobileBtn.disabled = true;
+            if (desktopBtn) desktopBtn.disabled = true;
+
+            const ITEM_HEIGHT = getItemHeight();
+            const WINDOW_HEIGHT = topicWindow.offsetHeight;
+
+            // Physics constants
+            const INITIAL_VELOCITY = initialVelocity || 40; // px per frame (at 60fps)
+            const FRICTION = 0.985;
+            const STOP_THRESHOLD = 1.5;
+
+            // Simulate physics to find where the reel naturally stops
+            let simVel = INITIAL_VELOCITY;
+            let simDist = 0;
+            while (simVel >= STOP_THRESHOLD) {
+                simDist += simVel;
+                simVel *= FRICTION;
+            }
+
+            // Which item index will be centered in the viewport at stop?
+            const centerAtStop = simDist + WINDOW_HEIGHT / 2;
+            const naturalIndex = Math.round((centerAtStop - ITEM_HEIGHT / 2) / ITEM_HEIGHT);
+            const LANDING_INDEX = naturalIndex + 1;
+
+            // Total items: enough before and after landing
+            const REEL_COUNT = LANDING_INDEX + 3;
+
+            // Pick the final topic
+            const finalIndex = getRandomIndex(lastTopicIndex);
+            lastTopicIndex = finalIndex;
+            const finalTopic = activeTopics[finalIndex];
+
+            // Build shuffled reel content
+            let reelTopics = [];
+            while (reelTopics.length < REEL_COUNT) {
+                reelTopics = reelTopics.concat(shuffleArray(activeTopics));
+            }
+            reelTopics = reelTopics.slice(0, REEL_COUNT);
+            reelTopics[LANDING_INDEX] = finalTopic;
+
+            // The Y translation that centers the landing item in viewport
+            const TARGET_Y = -(LANDING_INDEX * ITEM_HEIGHT + ITEM_HEIGHT / 2 - WINDOW_HEIGHT / 2);
+
+            // Build DOM
+            reelStrip.innerHTML = '';
+            reelStrip.classList.remove('settled');
+            reelStrip.style.transition = '';
+            reelStrip.style.transform = 'translateY(0px)';
+            reelTopics.forEach(function(topic, i) {
+                const div = document.createElement('div');
+                div.className = 'reel-item';
+                div.style.height = ITEM_HEIGHT + 'px';
+                div.textContent = topic;
+                if (i === LANDING_INDEX) {
+                    div.setAttribute('data-landing', 'true');
+                }
+                reelStrip.appendChild(div);
+            });
+
+            fitTextToWidth(reelStrip.children, topicWindow.offsetWidth - 32);
+
+            // Style items based on distance from viewport center
+            function styleItemsByPosition(currentY) {
+                var viewportCenter = WINDOW_HEIGHT / 2;
+                var items = reelStrip.children;
+                for (var i = 0; i < items.length; i++) {
+                    var itemCenter = i * ITEM_HEIGHT + ITEM_HEIGHT / 2 + currentY;
+                    var dist = Math.abs(itemCenter - viewportCenter);
+                    var norm = Math.min(dist / ITEM_HEIGHT, 1);
+                    var scale = 1.6 - norm * 0.6;
+                    var opacity = 1 - norm * 0.7;
+                    items[i].style.transform = 'scale(' + scale + ')';
+                    items[i].style.opacity = opacity;
+                }
+            }
+
+            // Animation state
+            let position = 0;
+            let velocity = INITIAL_VELOCITY;
+            let lastBoundaryIndex = 0;
+            let lastFrameTime = null;
+
+            function animate(timestamp) {
+                if (lastFrameTime === null) lastFrameTime = timestamp;
+                var rawDt = (timestamp - lastFrameTime) / 16.667;
+                var dt = Math.min(rawDt, 3);
+                lastFrameTime = timestamp;
+
+                if (dt === 0) {
+                    animFrameId = requestAnimationFrame(animate);
+                    return;
+                }
+
+                position += velocity * dt;
+                velocity *= Math.pow(FRICTION, dt);
+
+                reelStrip.style.transform = 'translateY(' + (-position) + 'px)';
+                styleItemsByPosition(-position);
+
+                var currentBoundaryIndex = Math.floor(position / ITEM_HEIGHT);
+                if (currentBoundaryIndex > lastBoundaryIndex) {
+                    var progress = 1 - (velocity / INITIAL_VELOCITY);
+                    playTick(Math.min(progress, 0.95));
+                    lastBoundaryIndex = currentBoundaryIndex;
+                }
+
+                if (velocity < STOP_THRESHOLD) {
+                    snapToTarget();
+                    return;
+                }
+
+                animFrameId = requestAnimationFrame(animate);
+            }
+
+            function snapToTarget() {
+                var startY = -position;
+                var distance = TARGET_Y - startY;
+                var startTime = performance.now();
+                var duration = 650;
+
+                function springAnimate(now) {
+                    var elapsed = now - startTime;
+                    var t = Math.min(elapsed / duration, 1);
+
+                    var spring = 1 - Math.exp(-7 * t) * Math.cos(5 * t);
+                    var y = startY + distance * spring;
+
+                    reelStrip.style.transform = 'translateY(' + y + 'px)';
+                    styleItemsByPosition(y);
+
+                    if (t < 1) {
+                        animFrameId = requestAnimationFrame(springAnimate);
+                    } else {
+                        reelStrip.style.transform = 'translateY(' + TARGET_Y + 'px)';
+                        onSettleComplete();
+                    }
+                }
+
+                animFrameId = requestAnimationFrame(springAnimate);
+            }
+
+            function onSettleComplete() {
+                reelStrip.classList.add('settled');
+                var landingItem = reelStrip.querySelector('[data-landing="true"]');
+                if (landingItem) {
+                    landingItem.classList.add('landed');
+                    var topicText = landingItem.innerText.replace(/\n/g, ' ').trim();
+                    var timerUrl = 'timer.html?topic=' + encodeURIComponent(topicText);
+                    document.querySelectorAll('.timer-btn-desktop, .timer-btn-mobile').forEach(function(link) {
+                        link.href = timerUrl;
+                    });
+                }
+
+                playLand();
+                if (handleArm) handleArm.classList.remove('disabled');
+                if (mobileBtn) mobileBtn.disabled = false;
+                if (desktopBtn) desktopBtn.disabled = false;
+                isSpinning = false;
+            }
+
+            // Start
+            animFrameId = requestAnimationFrame(animate);
+        }
+
+        // --- Handle Release Clunk Sound ---
+        function playHandleClunk() {
+            ensureAudioContext();
+            const now = audioCtx.currentTime;
+
+            const bufferSize = audioCtx.sampleRate * 0.05;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+            }
+
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(600, now);
+            filter.Q.setValueAtTime(1, now);
+
+            const gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            noise.start(now);
+            noise.stop(now + 0.06);
+        }
+
+        // --- Slot Lever Drag Interaction ---
+        (function initLever() {
+            const arm = document.getElementById('handleArm');
+            const knob = document.getElementById('handleKnob');
+            if (!arm || !knob) return;
+
+            const MAX_ANGLE = 180;
+            const DRAG_SENSITIVITY = 280;
+
+            arm.classList.add('hint');
+            arm.addEventListener('animationend', function() {
+                arm.classList.remove('hint');
+            }, { once: true });
+
+            let isDragging = false;
+            let startY = 0;
+            let currentAngle = 0;
+            let hasMoved = false;
+
+            function resetLever() {
+                isDragging = false;
+                hasMoved = false;
+                currentAngle = 0;
+                arm.classList.remove('grabbing', 'spring-back');
+                knob.style.boxShadow = '';
+            }
+
+            knob.addEventListener('pointerdown', function(e) {
+                if (isSpinning) return;
+                if (arm.classList.contains('disabled')) return;
+
+                e.preventDefault();
+                knob.setPointerCapture(e.pointerId);
+                isDragging = true;
+                hasMoved = false;
+                arm.classList.add('grabbing');
+                arm.classList.remove('hint', 'spring-back');
+                arm.style.transition = '';
+                var pullHint = document.getElementById('pullLeverHint');
+                if (pullHint) pullHint.classList.add('hidden');
+
+                startY = e.clientY;
+                currentAngle = 0;
+
+                ensureAudioContext();
+            });
+
+            knob.addEventListener('pointermove', function(e) {
+                if (!isDragging) return;
+
+                var deltaY = Math.max(0, e.clientY - startY);
+                if (deltaY > 3) hasMoved = true;
+                currentAngle = Math.min(deltaY * (MAX_ANGLE / DRAG_SENSITIVITY), MAX_ANGLE);
+
+                arm.style.transform = 'rotate(' + currentAngle + 'deg)';
+
+                var progress = currentAngle / MAX_ANGLE;
+                var shadowBlur = 6 + progress * 14;
+                var shadowY = 2 + progress * 6;
+                knob.style.boxShadow = '0 ' + shadowY + 'px ' + shadowBlur + 'px rgba(26, 60, 52, ' + (0.2 + progress * 0.2) + ')';
+            });
+
+            function handleRelease(e) {
+                if (!isDragging) return;
+                isDragging = false;
+                arm.classList.remove('grabbing');
+
+                var normalizedPull = currentAngle / MAX_ANGLE;
+
+                // Spring arm back
+                knob.style.boxShadow = '';
+                arm.classList.add('spring-back');
+                arm.style.transform = 'rotate(0deg)';
+                setTimeout(function() {
+                    arm.classList.remove('spring-back');
+                }, 600);
+
+                // Any drag movement or even a click triggers a spin
+                if (hasMoved || currentAngle > 0) {
+                    playHandleClunk();
+                    var mappedVelocity = 20 + Math.min(normalizedPull, 1) * 35;
+                    generateTopic(mappedVelocity);
+                } else {
+                    // Pure click with no movement — still trigger
+                    playHandleClunk();
+                    generateTopic(25);
+                }
+
+                currentAngle = 0;
+                hasMoved = false;
+            }
+
+            knob.addEventListener('pointerup', handleRelease);
+            knob.addEventListener('pointercancel', handleRelease);
+
+            // Fallback: if pointer events get lost, listen globally
+            document.addEventListener('pointerup', function() {
+                if (isDragging) {
+                    handleRelease();
+                }
+            });
+        })();
+
+        // --- Populate initial reel on load ---
+        function reinitReel() {
+            var reelStrip = document.getElementById('reelStrip');
+            var topicWindow = document.getElementById('topicWindow');
+            var ITEM_HEIGHT = getItemHeight();
+            var WINDOW_HEIGHT = topicWindow.offsetHeight;
+            var visibleCount = 3;
+
+            var initialTopics = shuffleArray(activeTopics).slice(0, visibleCount);
+
+            reelStrip.innerHTML = '';
+            reelStrip.classList.remove('settled');
+            reelStrip.style.transition = '';
+
+            initialTopics.forEach(function(topic) {
+                var div = document.createElement('div');
+                div.className = 'reel-item';
+                div.style.height = ITEM_HEIGHT + 'px';
+                div.textContent = topic;
+                reelStrip.appendChild(div);
+            });
+
+            fitTextToWidth(reelStrip.children, topicWindow.offsetWidth - 32);
+
+            var middleIndex = 1;
+            var offsetY = -(middleIndex * ITEM_HEIGHT + ITEM_HEIGHT / 2 - WINDOW_HEIGHT / 2);
+            reelStrip.style.transform = 'translateY(' + offsetY + 'px)';
+
+            reelStrip.classList.add('settled');
+            var centerItem = reelStrip.children[middleIndex];
+            if (centerItem) centerItem.classList.add('landed');
+        }
+        reinitReel();
+
+        // --- Mobile Spin Button ---
+        (function initMobileButton() {
+            var btn = document.getElementById('mobileSpinBtn');
+            if (!btn) return;
+
+            btn.addEventListener('click', function() {
+                if (isSpinning) return;
+                ensureAudioContext();
+                playHandleClunk();
+                generateTopic(30);
+            });
+        })();
+
+        // --- Desktop Spin Button ---
+        (function initDesktopSpinButton() {
+            var btn = document.getElementById('desktopSpinBtn');
+            if (!btn) return;
+
+            btn.addEventListener('click', function() {
+                if (isSpinning) return;
+                ensureAudioContext();
+                playHandleClunk();
+                generateTopic(30);
+            });
+        })();
+
+        // --- Language Switching ---
+        var currentLang = 'en';
+        var loadedLangs = { en: true };
+        var loadedFonts = {};
+
+        function loadGoogleFont(fontFamily, url) {
+            if (loadedFonts[fontFamily]) return;
+            loadedFonts[fontFamily] = true;
+            var link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = url;
+            document.head.appendChild(link);
+        }
+
+        var langFontMap = {
+            zh: { family: 'Noto Serif SC', url: 'https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap' },
+            ja: { family: 'Noto Serif JP', url: 'https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&display=swap' },
+            ko: { family: 'Noto Serif KR', url: 'https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&display=swap' },
+            ar: { family: 'Noto Naskh Arabic', url: 'https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;700&display=swap' },
+            ur: { family: 'Noto Naskh Arabic', url: 'https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;700&display=swap' },
+            th: { family: 'Noto Serif Thai', url: 'https://fonts.googleapis.com/css2?family=Noto+Serif+Thai:wght@400;700&display=swap' }
+        };
+
+        function switchLanguage(lang) {
+            if (isSpinning) return;
+
+            var dropdown = document.getElementById('langDropdown');
+            var flagEl = document.getElementById('langFlag');
+            var codeEl = document.getElementById('langCode');
+            var options = document.querySelectorAll('.lang-option');
+
+            // Update dropdown UI
+            options.forEach(function(opt) {
+                opt.classList.remove('selected');
+                if (opt.getAttribute('data-lang') === lang) {
+                    opt.classList.add('selected');
+                    flagEl.textContent = opt.getAttribute('data-flag');
+                    codeEl.textContent = opt.getAttribute('data-code');
+                }
+            });
+
+            // Handle non-Latin font classes
+            var topicWindow = document.getElementById('topicWindow');
+            var langClasses = ['lang-zh', 'lang-ja', 'lang-ko', 'lang-ar', 'lang-ur', 'lang-th'];
+            langClasses.forEach(function(cls) { topicWindow.classList.remove(cls); });
+            if (langFontMap[lang]) {
+                loadGoogleFont(langFontMap[lang].family, langFontMap[lang].url);
+                topicWindow.classList.add('lang-' + lang);
+            }
+
+            currentLang = lang;
+
+            function applyLangSwitch() {
+                activeTopics = computeActiveTopics(lang, currentDifficulty, currentCategory);
+                lastTopicIndex = -1;
+                reinitReel();
+                localStorage.setItem('impromptu-lang', lang);
+            }
+
+            // Lazy-load the base language file if needed
+            function loadBaseAndCategories() {
+                if (!loadedLangs[lang]) {
+                    var script = document.createElement('script');
+                    script.src = 'topics-' + lang + '.js';
+                    script.onload = function() {
+                        loadedLangs[lang] = true;
+                        loadCatFile();
+                    };
+                    document.head.appendChild(script);
+                } else {
+                    loadCatFile();
+                }
+            }
+
+            // Lazy-load the category file for this language if needed
+            function loadCatFile() {
+                if (lang === 'en' || loadedCatLangs[lang]) {
+                    applyLangSwitch();
+                    return;
+                }
+                var catScript = document.createElement('script');
+                catScript.src = 'topics-categories-' + lang + '.js';
+                catScript.onload = function() {
+                    topicsByCategoryLang[lang] = { general: topicsByLang[lang] };
+                    var catData = window[catVarNames[lang]];
+                    var catKeys = Object.keys(catData);
+                    for (var i = 0; i < catKeys.length; i++) {
+                        topicsByCategoryLang[lang][catKeys[i]] = catData[catKeys[i]];
+                    }
+                    loadedCatLangs[lang] = true;
+                    applyLangSwitch();
+                };
+                document.head.appendChild(catScript);
+            }
+
+            loadBaseAndCategories();
+        }
+
+        // --- Language Dropdown Interaction ---
+        (function initLangDropdown() {
+            var dropdown = document.getElementById('langDropdown');
+            var trigger = document.getElementById('langTrigger');
+            var menu = document.getElementById('langMenu');
+
+            trigger.addEventListener('click', function(e) {
+                e.stopPropagation();
+                document.getElementById('diffDropdown').classList.remove('open');
+                document.getElementById('catDropdown').classList.remove('open');
+                dropdown.classList.toggle('open');
+            });
+
+            menu.addEventListener('click', function(e) {
+                var option = e.target.closest('.lang-option');
+                if (!option) return;
+                var lang = option.getAttribute('data-lang');
+                switchLanguage(lang);
+                dropdown.classList.remove('open');
+            });
+
+            document.addEventListener('click', function() {
+                dropdown.classList.remove('open');
+            });
+
+            dropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        })();
+
+        // --- Difficulty Switching ---
+        function switchDifficulty(diff) {
+            if (isSpinning) return;
+
+            currentDifficulty = diff;
+
+            var iconEl = document.getElementById('diffIcon');
+            var labelEl = document.getElementById('diffLabel');
+            var options = document.querySelectorAll('.diff-option');
+
+            options.forEach(function(opt) {
+                opt.classList.remove('selected');
+                if (opt.getAttribute('data-diff') === diff) {
+                    opt.classList.add('selected');
+                    iconEl.textContent = opt.getAttribute('data-icon');
+                    labelEl.textContent = opt.getAttribute('data-label');
+                }
+            });
+
+            activeTopics = computeActiveTopics(currentLang, currentDifficulty, currentCategory);
+            lastTopicIndex = -1;
+            reinitReel();
+            localStorage.setItem('impromptu-difficulty', diff);
+        }
+
+        // --- Difficulty Dropdown Interaction ---
+        (function initDiffDropdown() {
+            var dropdown = document.getElementById('diffDropdown');
+            var trigger = document.getElementById('diffTrigger');
+            var menu = document.getElementById('diffMenu');
+
+            trigger.addEventListener('click', function(e) {
+                e.stopPropagation();
+                document.getElementById('langDropdown').classList.remove('open');
+                document.getElementById('catDropdown').classList.remove('open');
+                dropdown.classList.toggle('open');
+            });
+
+            menu.addEventListener('click', function(e) {
+                var option = e.target.closest('.diff-option');
+                if (!option) return;
+                var diff = option.getAttribute('data-diff');
+                switchDifficulty(diff);
+                dropdown.classList.remove('open');
+            });
+
+            document.addEventListener('click', function() {
+                dropdown.classList.remove('open');
+            });
+
+            dropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        })();
+
+        // --- Category Switching ---
+        function switchCategory(cat) {
+            if (isSpinning) return;
+
+            currentCategory = cat;
+
+            var iconEl = document.getElementById('catIcon');
+            var labelEl = document.getElementById('catLabel');
+            var options = document.querySelectorAll('.cat-option');
+
+            options.forEach(function(opt) {
+                opt.classList.remove('selected');
+                if (opt.getAttribute('data-cat') === cat) {
+                    opt.classList.add('selected');
+                    iconEl.textContent = opt.getAttribute('data-icon');
+                    labelEl.textContent = opt.getAttribute('data-label');
+                }
+            });
+
+            activeTopics = computeActiveTopics(currentLang, currentDifficulty, currentCategory);
+            lastTopicIndex = -1;
+            reinitReel();
+            localStorage.setItem('impromptu-category', cat);
+        }
+
+        // --- Category Dropdown Interaction ---
+        (function initCatDropdown() {
+            var dropdown = document.getElementById('catDropdown');
+            var trigger = document.getElementById('catTrigger');
+            var menu = document.getElementById('catMenu');
+
+            trigger.addEventListener('click', function(e) {
+                e.stopPropagation();
+                document.getElementById('langDropdown').classList.remove('open');
+                document.getElementById('diffDropdown').classList.remove('open');
+                dropdown.classList.toggle('open');
+            });
+
+            menu.addEventListener('click', function(e) {
+                var option = e.target.closest('.cat-option');
+                if (!option) return;
+                var cat = option.getAttribute('data-cat');
+                switchCategory(cat);
+                dropdown.classList.remove('open');
+            });
+
+            document.addEventListener('click', function() {
+                dropdown.classList.remove('open');
+            });
+
+            dropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        })();
+
+        // --- Restore saved language, difficulty, and category on load ---
+        (function restoreSaved() {
+            var savedCat = localStorage.getItem('impromptu-category');
+            if (savedCat && savedCat !== 'random') {
+                switchCategory(savedCat);
+            }
+
+            var savedDiff = localStorage.getItem('impromptu-difficulty');
+            if (savedDiff && savedDiff !== 'random') {
+                switchDifficulty(savedDiff);
+            }
+
+            var savedLang = localStorage.getItem('impromptu-lang');
+            if (savedLang && savedLang !== 'en') {
+                switchLanguage(savedLang);
+            }
+        })();
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
