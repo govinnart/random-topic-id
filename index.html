@@ -46,13 +46,20 @@
             text-align: center;
         }
 
+        .topic-text {
+            font-size: 5rem;
+            font-weight: bold;
+            transition: transform 1s ease-out;
+            color: #1A3C34;
+        }
+
         .spin-btn {
             background-color: #2A5A4E;
             color: white;
             border: none;
             padding: 10px 20px;
-            font-size: 1.1rem;
-            border-radius: 5px;
+            font-size: 1.5rem;
+            border-radius: 50px;
             cursor: pointer;
             transition: background-color 0.3s;
             margin-top: 20px;
@@ -68,6 +75,7 @@
             left: 0;
             top: 0;
             will-change: transform;
+            animation: spinWheel 4s ease-in-out;
         }
 
         .reel-item {
@@ -78,7 +86,7 @@
             justify-content: center;
             text-align: center;
             font-family: 'DM Serif Display', serif;
-            font-size: 2rem;
+            font-size: 3rem;
             line-height: 1.15;
             color: #1A3C34;
             padding: 0 1rem;
@@ -86,53 +94,9 @@
             overflow-wrap: break-word;
         }
 
-        .reel-center-line {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 80%;
-            height: 130px;
-            border-top: 1px solid rgba(26, 60, 52, 0.08);
-            border-bottom: 1px solid rgba(26, 60, 52, 0.08);
-            pointer-events: none;
-            z-index: 2;
-        }
-
-        .spin-btn-row {
-            margin-top: 30px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .spin-btn {
-            display: inline-block;
-            padding: 0.6rem 2.2rem;
-            font-family: 'Baloo 2', cursive;
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #F9F5EB;
-            background: linear-gradient(135deg, #2A5A4E, #1A3C34);
-            border: 2px solid #1A3C34;
-            border-radius: 50px;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(26, 60, 52, 0.3);
-            transition: transform 0.1s ease, box-shadow 0.1s ease;
-        }
-
-        .spin-btn:active {
-            transform: scale(0.95);
-            box-shadow: 0 2px 6px rgba(26, 60, 52, 0.3);
-        }
-
-        .spin-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        /* Adjustments for large text and spin wheel effect */
-        .reel-item {
-            font-size: 3rem; /* Increase font size for larger topics */
+        @keyframes spinWheel {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -140,26 +104,16 @@
     <div class="container">
         <div class="topic-window">
             <h1>Generator Topik Acak</h1>
-            <p id="topic-text">Topik apa yang akan muncul?</p>
+            <p id="topic-text" class="topic-text">Topik apa yang akan muncul?</p>
             <div class="spin-btn-row">
                 <button class="spin-btn" id="spin-btn">Putar Roda</button>
             </div>
         </div>
     </div>
 
+    <script src="/mnt/data/topics.js"></script>
     <script>
-        const topics = [
-            "Teknologi",
-            "Keuangan",
-            "Kesehatan",
-            "Pendidikan",
-            "Bisnis",
-            "Politik",
-            "Lingkungan",
-            "Sejarah",
-            "Sosial",
-            "Sains"
-        ];
+        const topics = topicsByLang.en.easy;
 
         function getRandomTopic() {
             const randomIndex = Math.floor(Math.random() * topics.length);
