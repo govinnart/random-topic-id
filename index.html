@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Generator Topik Pidato</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <h1>Generator Topik Pidato</h1>
+      <p class="subtitle">Buat ide topik pidato dalam sekali klik.</p>
+
+      <section class="card">
+        <div id="topicOutput" class="output" aria-live="polite">
+          Pilih filter (opsional), lalu klik tombol untuk menghasilkan topik.
+        </div>
+
+        <form id="filterForm" class="filters" autocomplete="off">
+          <label>
+            Tema
+            <select id="temaSelect">
+              <option value="">Semua tema</option>
+              <option value="pendidikan">Pendidikan</option>
+              <option value="lingkungan">Lingkungan</option>
+              <option value="kepemimpinan">Kepemimpinan</option>
+              <option value="teknologi">Teknologi</option>
+              <option value="motivasi">Motivasi</option>
+            </select>
+          </label>
+
+          <label>
+            Audiens
+            <select id="audiensSelect">
+              <option value="">Semua audiens</option>
+              <option value="pelajar">Pelajar</option>
+              <option value="mahasiswa">Mahasiswa</option>
+              <option value="umum">Masyarakat umum</option>
+              <option value="profesional">Profesional</option>
+            </select>
+          </label>
+
+          <label>
+            Tingkat formal
+            <select id="formalSelect">
+              <option value="">Campuran</option>
+              <option value="formal">Formal</option>
+              <option value="semi-formal">Semi-formal</option>
+              <option value="santai">Santai</option>
+            </select>
+          </label>
+        </form>
+
+        <button id="generateBtn" type="button">Generate Topik</button>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
